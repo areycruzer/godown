@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import type { Vendor } from '../api'
 
-type Props = { vendors: Vendor[] }
+type Props = { vendors: Vendor[]; onEnrich?: (vendor: Vendor) => void }
 
-export function VendorPanel({ vendors }: Props) {
+export function VendorPanel({ vendors, onEnrich }: Props) {
   if (!vendors.length) {
     return (
       <aside className="vendor-panel">
@@ -17,14 +17,14 @@ export function VendorPanel({ vendors }: Props) {
       <h2>Vendors <span className="count">{vendors.length}</span></h2>
       <ul className="vendor-list">
         {vendors.map((v, i) => (
-          <VendorCard key={`${v.supplierId ?? v.supplierUrl ?? i}`} vendor={v} />
+          <VendorCard key={`${v.supplierId ?? v.supplierUrl ?? i}`} vendor={v} onEnrich={onEnrich} />
         ))}
       </ul>
     </aside>
   )
 }
 
-function VendorCard({ vendor }: { vendor: Vendor }) {
+function VendorCard({ vendor, onEnrich }: { vendor: Vendor; onEnrich?: (vendor: Vendor) => void }) {
   const [open, setOpen] = useState(false)
   const loc = [vendor.supplierCity, vendor.supplierState].filter(Boolean).join(', ')
   return (
@@ -52,6 +52,18 @@ function VendorCard({ vendor }: { vendor: Vendor }) {
             Product
           </a>
         )}
+        {onEnrich && !vendor.profile && !vendor.pdp && !(vendor.reviews?.length) && (
+          <button
+            type="button"
+            className="enrich-btn"
+            onClick={(e) => {
+              e.stopPropagation()
+              onEnrich(vendor)
+            }}
+          >
+            ⚡ Enrich
+          </button>
+        )}
       </div>
       {open && (
         <div className="vendor-detail">
@@ -74,10 +86,11 @@ function VendorCard({ vendor }: { vendor: Vendor }) {
             </section>
           )}
           {!vendor.profile && !vendor.pdp && !(vendor.reviews?.length) && (
-            <p className="muted">No enrichment yet — use Hybrid/Full or ask to enrich.</p>
+            <p className="muted">No enrichment yet — click ⚡ Enrich or use Full mode.</p>
           )}
         </div>
       )}
     </li>
   )
 }
+

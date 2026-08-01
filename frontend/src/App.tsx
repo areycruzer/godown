@@ -91,6 +91,11 @@ export default function App() {
     setVendors([])
   }
 
+  function handleEnrich(vendor: Vendor) {
+    const name = vendor.companyName || vendor.supplierUrl || 'vendor'
+    void onSend(`Enrich details and profile for ${name}`)
+  }
+
   return (
     <div className="app">
       <header className="top">
@@ -119,8 +124,9 @@ export default function App() {
 
       <main className="workspace">
         <Chat messages={messages} busy={busy} onSend={onSend} onClear={onClear} />
-        <VendorPanel vendors={vendors} />
+        <VendorPanel vendors={vendors} onEnrich={handleEnrich} />
       </main>
     </div>
   )
 }
+

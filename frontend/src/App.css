@@ -393,7 +393,25 @@
   gap: 0.55rem;
   margin-top: 0.45rem;
   font-size: 0.78rem;
+  align-items: center;
 }
+
+.enrich-btn {
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+  cursor: pointer;
+  border-radius: 2px;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+.enrich-btn:hover {
+  opacity: 0.85;
+}
+
 
 .vendor-detail {
   margin-top: 0.55rem;

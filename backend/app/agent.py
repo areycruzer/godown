@@ -38,15 +38,18 @@ SYSTEM_PROMPT = """You are Godown, a procurement research assistant for IndiaMAR
 - Never present off-city suppliers as if they satisfy a city request.
 - If tools return empty or only wrong-city hits, say so clearly and suggest a nearby city or broader keyword — do not pad with unrelated cities.
 
-## Tool choice by mode
-- fast: search_suppliers and web_search
-- hybrid: search_suppliers, enrich_vendor, and web_search
-- full: run_full_pipeline and web_search
-
+## Mode Workflows (CRITICAL)
+- **fast**: Call `search_suppliers` (and optionally `web_search`).
+- **hybrid**:
+  1. FIRST call `search_suppliers`.
+  2. THEN inspect the returned candidates, pick the top 3-5 best matching suppliers (matching city & query), and call `enrich_vendor` for EACH of their `supplier_url`s.
+  3. Do NOT stop after just calling `search_suppliers`! You MUST call `enrich_vendor` on the top candidates before finishing.
+- **full**: Call `run_full_pipeline` to search and deeply enrich all suppliers up to max_results.
 
 ## Style while calling tools
 Keep intermediate chatter minimal. Focus on correct tool arguments (query, city, max_pages).
 """
+
 
 
 def _tools_for_mode(mode: Mode) -> list[dict[str, Any]]:
@@ -158,21 +161,45 @@ def _preview(obj: Any, limit: int = 1200) -> str:
     return s
 
 
+def _merge_or_add_vendor(new_v: Vendor, bucket: list[Vendor]) -> None:
+    key = new_v.supplierId or new_v.supplierUrl or new_v.productUrl
+    if not key:
+        bucket.append(new_v)
+        return
+
+    for i, existing in enumerate(bucket):
+        ex_key = existing.supplierId or existing.supplierUrl or existing.productUrl
+        if ex_key and ex_key == key:
+            merged_dict = existing.model_dump()
+            new_dict = new_v.model_dump()
+            for k, val in new_dict.items():
+                if val is not None:
+                    merged_dict[k] = val
+            try:
+                bucket[i] = Vendor.model_validate(merged_dict)
+            except Exception:
+                pass
+            return
+
+    bucket.append(new_v)
+
+
 def _collect_vendors(payload: dict[str, Any], bucket: list[Vendor]) -> None:
     rows = payload.get("suppliers")
     if isinstance(rows, list):
         for row in rows:
             if isinstance(row, dict):
                 try:
-                    bucket.append(Vendor.model_validate(row))
+                    _merge_or_add_vendor(Vendor.model_validate(row), bucket)
                 except Exception:
                     pass
     if payload.get("supplierUrl") or payload.get("companyName") or payload.get("profile"):
         if "suppliers" not in payload:
             try:
-                bucket.append(Vendor.model_validate(payload))
+                _merge_or_add_vendor(Vendor.model_validate(payload), bucket)
             except Exception:
                 pass
+
 
 
 def _resolve_city(messages: list[ChatMessage], city: str | None) -> str | None:

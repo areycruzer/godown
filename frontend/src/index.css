@@ -1,0 +1,57 @@
+:root {
+  --ink: #1a1f1c;
+  --ink-soft: #3d4740;
+  --paper: #e8e4d9;
+  --paper-2: #d4cfc0;
+  --steel: #5a6b63;
+  --accent: #c45c26;
+  --accent-ink: #fff8f0;
+  --ok: #2f6b4f;
+  --bad: #8b2e2e;
+  --line: rgba(26, 31, 28, 0.14);
+  --shadow: 0 12px 40px rgba(26, 31, 28, 0.08);
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-body);
+  line-height: 1.45;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(196, 92, 38, 0.12), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 0%, rgba(90, 107, 99, 0.15), transparent 50%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(26, 31, 28, 0.015) 2px,
+      rgba(26, 31, 28, 0.015) 3px
+    ),
+    var(--paper);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+a {
+  color: var(--accent);
+}

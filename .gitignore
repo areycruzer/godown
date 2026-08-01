@@ -1,0 +1,22 @@
+.env
+.env.local
+.env.*.local
+.otp_pending.json
+backend/.venv/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+.DS_Store
+# Keep sessions docs; ignore secrets people paste in
+sessions/*
+!sessions/README.md
+!sessions/*.example
+*.jsonl
+*.log
+.idea/
+.vscode/
+*.pem
+*.key

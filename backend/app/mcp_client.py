@@ -18,9 +18,10 @@ async def _call_web_search_mcp(query: str, num_results: int = 5) -> dict:
     
     server_params = StdioServerParameters(
         command="npx",
-        args=["-y", "@exa/mcp-server"],
+        args=["-y", "exa-mcp-server"],
         env={**os.environ, "EXA_API_KEY": api_key}
     )
+
     
     try:
         async with stdio_client(server_params) as (read, write):

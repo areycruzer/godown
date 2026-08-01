@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     glm_model: str = "glm-4.5-flash"
     openai_api_key: str = ""
     gemini_api_key: str = ""
+    exa_api_key: str = ""
+
 
     proxy_url: str | None = None
     require_india_egress: bool = True

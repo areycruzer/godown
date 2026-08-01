@@ -20,6 +20,8 @@ from app.models import (
 from app.present import extract_city_from_text, present_vendors_for_user, vendor_matches_city
 from app.tools.pipeline import enrich_vendor, run_full_pipeline
 from app.tools.search_rp import search_suppliers
+from app.mcp_client import web_search_mcp
+
 
 SYSTEM_PROMPT = """You are Godown, a procurement research assistant for IndiaMART suppliers in India.
 
@@ -28,6 +30,7 @@ SYSTEM_PROMPT = """You are Godown, a procurement research assistant for IndiaMAR
 2. Always pass the user's city into tool arguments when a city is mentioned (message or default city).
 3. After tools return, a separate results-editor will filter and rewrite the final answer — still, your tool calls must target the right city/query.
 4. Do not suggest RFQ / Get Best Price / phone-reveal flows.
+5. Use `web_search` to find extra vendor information, product prices/context, and general reputation/reviews outside of IndiaMART.
 
 ## City & relevance (critical)
 - If the user asks for a city (e.g. Delhi), you MUST pass that city to search_suppliers / run_full_pipeline.
@@ -36,9 +39,10 @@ SYSTEM_PROMPT = """You are Godown, a procurement research assistant for IndiaMAR
 - If tools return empty or only wrong-city hits, say so clearly and suggest a nearby city or broader keyword — do not pad with unrelated cities.
 
 ## Tool choice by mode
-- fast: search_suppliers only
-- hybrid: search_suppliers, then enrich_vendor for specific promising storefronts the user cares about
-- full: run_full_pipeline for deep enrichment
+- fast: search_suppliers and web_search
+- hybrid: search_suppliers, enrich_vendor, and web_search
+- full: run_full_pipeline and web_search
+
 
 ## Style while calling tools
 Keep intermediate chatter minimal. Focus on correct tool arguments (query, city, max_pages).
@@ -112,11 +116,36 @@ def _tools_for_mode(mode: Mode) -> list[dict[str, Any]]:
             },
         },
     }
+    web_search_tool = {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": (
+                "Search the web for additional info about a supplier, "
+                "product, reputation, reviews, or general market info."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query, e.g. 'reputation of XYZ enterprise Coimbatore' or 'steel pipe market prices'",
+                    },
+                    "num_results": {
+                        "type": "integer",
+                        "description": "Number of results to retrieve (default: 5).",
+                    }
+                },
+                "required": ["query"],
+            },
+        },
+    }
     if mode == Mode.fast:
-        return [search_tool]
+        return [search_tool, web_search_tool]
     if mode == Mode.hybrid:
-        return [search_tool, enrich_tool]
-    return [full_tool]
+        return [search_tool, enrich_tool, web_search_tool]
+    return [full_tool, web_search_tool]
+
 
 
 def _preview(obj: Any, limit: int = 1200) -> str:
@@ -359,9 +388,15 @@ def _run_tool_loop(
                             city=args.get("city"),
                             max_results=int(args.get("max_results") or max_results),
                         )
+                    elif name == "web_search":
+                        result = web_search_mcp(
+                            query=args.get("query") or "",
+                            num_results=int(args.get("num_results") or 5),
+                        )
                     else:
                         result = {"error": f"unknown_tool:{name}"}
                         ok = False
+
                 except Exception as e:
                     result = {"error": str(e)}
                     ok = False

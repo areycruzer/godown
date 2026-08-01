@@ -67,6 +67,16 @@ Restart the backend after changing provider/key.
 
 Set a **City** in the UI header, or say “in Delhi” in the prompt.
 
+## Web Search (RAG via MCP)
+
+The agent supports RAG-based Web Search through Exa's MCP server to enrich supplier data, review information, and product details.
+To use this feature:
+1. Ensure Node.js (`npx`) is installed on the backend host.
+2. Add your Exa API key in `.env`:
+   ```bash
+   EXA_API_KEY=your_exa_api_key_here
+   ```
+
 ## Optional login (`sessions/`)
 
 Unauthenticated search works. For logged-in cookies (~24h TTL):
@@ -85,6 +95,8 @@ python3 scripts/indiamart_login.py --mobile 10DIGIT
 | `PROXY_URL` | Only if egress is not India |
 | `REQUIRE_INDIA_EGRESS` | Default `true` |
 | `USE_AK` | `true` when session files are fresh |
+| `EXA_API_KEY` | Optional Exa API key for Web Search (RAG via MCP) |
+
 
 ## Layout
 
